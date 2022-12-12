@@ -20,6 +20,8 @@ if main[0].button("Purge"):
     st.session_state['default'] = recPurge
 
 allfiles = glob.glob(f"Logs/*")
+allfiles.sort(key=lambda x: os.path.getmtime(x))
+allfiles.reverse()
 allfiles_trimed = [f.replace("Logs/","") for f in allfiles]
 
 uploaded_file = main[1].multiselect("**Import recipe:**", allfiles_trimed)
