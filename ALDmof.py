@@ -11,7 +11,7 @@ if 'default' not in st.session_state:
     st.session_state['default'] = recALD
 
 st.write("---")
-main = st.columns(3)
+main = st.columns((1,4,4))
 
 if main[0].button("ALD"):
     st.session_state['default'] = recALD
@@ -102,7 +102,7 @@ allsteps=[initgas]+valves
 for i in range(len(allsteps)):
     if len(allsteps[i])==0:
         if i==0:
-            st.warning("**!! Initialization with no gas input, check it's not an error. !!**")
+            main[2].warning("**!! Initialization with no gas input, check it's not an error. !!**")
         else:
             st.warning(f"**!! Step {i} with no gas input, check it's not an error. !!**")
 
