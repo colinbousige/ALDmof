@@ -1,33 +1,31 @@
 import streamlit as st
 import pandas as pd
+import glob
 from datetime import datetime
 from dateutil import parser
 from ressources.setup import *
-import glob
 
 framework()
-
-c1, c2 = st.columns((2, 1))
-warning_message = c1.empty()
+warning_message = st.empty()
 
 if 'default' not in st.session_state:
     st.session_state['default'] = recALD
 
 st.write("---")
-main = st.columns((1,4,4))
+main = st.columns((1,1,4))
 
 if main[0].button("ALD"):
     st.session_state['default'] = recALD
 
-if main[0].button("Purge"):
+if main[1].button("Purge"):
     st.session_state['default'] = recPurge
 
 allfiles = glob.glob(f"Logs/*")
 allfiles.sort(key=lambda x: os.path.getmtime(x))
 allfiles.reverse()
-allfiles_trimed = [f.replace("Logs/","") for f in allfiles]
+allfiles_trimed = [f.replace("Logs/","").replace(".txt", "") for f in allfiles]
 
-uploaded_file = main[1].multiselect("**Import recipe:**", allfiles_trimed, label_visibility="collapsed", max_selections=1)
+uploaded_file = main[2].multiselect("**Import recipe:**", allfiles_trimed, label_visibility="collapsed", max_selections=1)
 if len(uploaded_file) > 0:
     df = pd.read_csv(f"Logs/{uploaded_file[0]}.txt", sep = "|", nrows = 2, skiprows = 2)
     st.session_state['default'] = {
@@ -52,7 +50,7 @@ wait = col2.number_input("Waiting before start [s]:", 0, 2000, default["wait"])
 st.sidebar.write("### Recipe___________________________________")
 col1, col2, col3 = st.sidebar.columns(3)
 Nsteps = col1.empty()
-Nsteps = col1.number_input("Number of steps in recipe:", min_value=1, max_value=20, value=default["Nsteps"])
+Nsteps = col1.number_input("Number of steps:", min_value=1, max_value=20, value=default["Nsteps"])
 N = col2.number_input("N Cycles:", min_value=0, step=1, value=default["N"], key="N")
 recipe = col3.text_input("Recipe name:", default["recipe"])
 times = []
@@ -103,13 +101,13 @@ if GObutton:
 # Show recipe graph
 # # # # # # # # # # # # # # # # # # # # # # # #
 
-allsteps=[initgas]+valves
+allsteps = [initgas] + valves + [fingas]
+nogas = []
 for i in range(len(allsteps)):
-    if len(allsteps[i])==0:
-        if i==0:
-            warning_message.warning("**!! Initialization with no gas input, check it's not an error. !!**")
-        else:
-            warning_message.warning(f"**!! Step {i} with no gas input, check it's not an error. !!**")
+    if len(allsteps[i]) == 0:
+        nogas.append(str(i))
+if len(nogas)>0:
+    warning_message.warning(f"**⚠️ Step {', '.join(nogas)} with no valve opened: please check it's not an error.** ⚠️")
 
-showgraph(initgas=initgas, wait=wait, valves=valves, 
-          times=times, Nsteps=Nsteps, N=N)
+showgraph(initgas=initgas, wait=wait, valves=valves, times=times, 
+          Nsteps=Nsteps, N=N, fingas=fingas, waitf=waitf)
