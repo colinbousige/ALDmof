@@ -11,13 +11,12 @@ warning_message = st.empty()
 if 'default' not in st.session_state:
     st.session_state['default'] = recALD
 
-st.write("---")
-main = st.columns((1,1,4))
+main = st.sidebar.columns((3,1,1))
 
-if main[0].button("ALD"):
+if main[1].button("ALD"):
     st.session_state['default'] = recALD
 
-if main[1].button("Purge"):
+if main[2].button("Purge"):
     st.session_state['default'] = recPurge
 
 allfiles = glob.glob(f"Logs/*")
@@ -25,7 +24,7 @@ allfiles.sort(key=lambda x: os.path.getmtime(x))
 allfiles.reverse()
 allfiles_trimed = [f.replace("Logs/","").replace(".txt", "") for f in allfiles]
 
-uploaded_file = main[2].multiselect("**Import recipe:**", allfiles_trimed, label_visibility="collapsed", max_selections=1)
+uploaded_file = main[0].multiselect("**Import recipe:**", allfiles_trimed, label_visibility="collapsed", max_selections=1)
 if len(uploaded_file) > 0:
     df = pd.read_csv(f"Logs/{uploaded_file[0]}.txt", sep = "|", nrows = 2, skiprows = 2)
     st.session_state['default'] = {
@@ -42,9 +41,18 @@ if len(uploaded_file) > 0:
 
 default = st.session_state['default']
 
+NO=[]
+NC=[]
+for v in sorted(relays.keys()):
+    if relays[v][1]=='NC':
+        NC.append(v)
+    else:
+        NO.append(v)
+
 st.sidebar.write("### Initialization______________________________")
+st.sidebar.write(f"ℹ️ {', '.join(NC)} {'are' if len(NC)>1 else 'is'} Normally Closed – {', '.join(NO)} {'are' if len(NO)>1 else 'is'} Normally Opened")
 col1, col2 = st.sidebar.columns(2)
-initgas = col1.multiselect(f"Initial valve open:", sorted(relays.keys()), default["initgas"])
+initgas = col1.multiselect(f"Initial valves opened:", sorted(relays.keys()), default["initgas"])
 wait = col2.number_input("Waiting before start [s]:", 0, 2000, default["wait"])
 
 st.sidebar.write("### Recipe___________________________________")
@@ -68,7 +76,7 @@ for step in range(Nsteps):
 
 st.sidebar.write("### Finalization______________________________")
 col1, col2 = st.sidebar.columns(2)
-fingas = col1.multiselect(f"Final valve open:", sorted(relays.keys()), default["fingas"])
+fingas = col1.multiselect(f"Final valves opened:", sorted(relays.keys()), default["fingas"])
 waitf = col2.number_input("Final waiting [s]:", min_value=0, value=default["waitf"])
 
 print_tot_time(sum(times)*N+wait+waitf)

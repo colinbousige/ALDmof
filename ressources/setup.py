@@ -29,16 +29,16 @@ st.set_page_config(
 # # # # # # # # # # # # # # # # # # # # # # # #
 
 # Relays from the USB relay board
-# rel = pyhid_usb_relay.find()
-rel = [1,2,3,4,5]
+# relayboard = pyhid_usb_relay.find()
+relayboard = [1,2,3,4,5,6]
 
-# Relays attribution
-# Hat adress, relay number
+# Relays attribution, state (NO for Normally Opened, NC for Normally Closed)
 relays = {
-    "V1": 1,
-    "V2": 2,
-    "V3": 3,
-    "V4": 4
+    "V1": (1, "NC"),
+    "V2": (2, "NC"),
+    "V3": (3, "NC"),
+    "V4": (4, "NC"),
+    "V5": (5, "NO")
 }
 
 # # # # # # # # # # # # # # # # # # # # # # # #
@@ -84,16 +84,18 @@ if 'cycle_time' not in st.session_state:
 
 def turn_ON(gas):
     """
-    Open relay from the hat with I2C command
+    Switch relay from the board to turn ON gas (check if valve is NO or NC)
     """
-    rel[relays[gas]] = True
+    relnum, state = relays[gas]
+    relayboard[relnum] = True if state == "NC" else False
 
 
 def turn_OFF(gas):
     """
-    Close relay from the hat with I2C command
+    Switch relay from the board to turn OFF gas (check if valve is NO or NC)
     """
-    rel[relays[gas]] = False
+    relnum, state = relays[gas]
+    relayboard[relnum] = True if state == "NO" else False
 
 
 # # # # # # # # # # # # # # # # # # # # # # 
@@ -194,6 +196,7 @@ def print_tot_time(tot):
     final_time.markdown(
         "<div><h2><span class='highlight red'>"+finaltime.strftime("%H:%M") +
         "</h2></span></div>", unsafe_allow_html=True)
+    remcyclebar.progress(int((0)/100))
 
 
 def countdown(t, tot):
@@ -228,7 +231,7 @@ def countdown(t, tot):
 def showgraph(initgas=sorted(relays.keys())[0], wait=30, valves=sorted(relays.keys())[0], times=[10.],
               Nsteps=4, highlight=-1, N=100, fingas=sorted(relays.keys())[0], waitf=30):
     """
-    Display a GraphViz chart of the recipe
+    Display a chart of the recipe
     """
     initgasclean = ' + '.join(initgas)
     if initgasclean == "":
@@ -240,11 +243,11 @@ def showgraph(initgas=sorted(relays.keys())[0], wait=30, valves=sorted(relays.ke
     stepslog += [f"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**Repeat {N} times:**<br>"]
     stepslog += ["&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%3d &bull; %-11s</b> – %.3lf s<br>" % \
             (i+1, ' + '.join(v) if len(v)>0 else "_**No Valve Opened**_", t) for i,(v,t) in enumerate(zip(valves,times))]
-    stepslog += [f"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**{len(times)+1} &bull; Finalization:** &nbsp;&nbsp;&nbsp;&nbsp;**{fingasclean}** – {waitf} s"]
+    stepslog += [f"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**{Nsteps+1} &bull; Finalization:** &nbsp;&nbsp;&nbsp;&nbsp;**{fingasclean}** – {waitf} s"]
     
     annotated_steps = stepslog.copy()
     if highlight >= 0:
-        if highlight>=1 and highlight<len(times)+1:
+        if highlight>=1 and highlight<Nsteps+1:
             annotated_steps[1] = f"<span class='highlightstep green'>{annotated_steps[1]}</span>"
         annotated_steps[highlight+1 if highlight >0 else highlight] = f"<span class='highlightstep blue'>{annotated_steps[highlight+1 if highlight >0 else highlight]}</span>"
     annotated_steps = "<br><div style='line-height:35px'>" + "".join(annotated_steps)+"</div>"
@@ -283,10 +286,8 @@ def end_recipe():
     """
     Ending procedure for recipes
     """
-    turn_OFF("V1")
-    turn_OFF("V2")
-    turn_OFF("V3")
-    turn_OFF("V4")
+    for v in sorted(relays.keys()):
+        turn_OFF(v)
     st.experimental_rerun()
 
 
