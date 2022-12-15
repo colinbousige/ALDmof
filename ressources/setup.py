@@ -37,8 +37,8 @@ relays = {
     "V1": (1, "NC"),
     "V2": (2, "NC"),
     "V3": (3, "NC"),
-    "V4": (4, "NC"),
-    "V5": (5, "NO")
+    "Ar reactor": (4, "NC"),
+    "Turn OFF Ar bypass": (5, "NO")
 }
 
 # # # # # # # # # # # # # # # # # # # # # # # #
@@ -53,7 +53,7 @@ recALD = {
     "waitf"  : 10,
     "N"      : 100,
     "Nsteps" : 4,
-    "valves" : [["V1"], ["V2","V3"], ["V1"], ["V2","V4"]],
+    "valves" : [["V1"], ["V2","V3"], ["V1"], ["V2","Ar reactor"]],
     "times"  : [10., 10., 10., 10.]
     }
 
@@ -65,7 +65,7 @@ recPurge = {
     "waitf"  : 1,
     "N"      : 1,
     "Nsteps" : 1,
-    "valves" : [["V1", "V2", "V3", "V4"]],
+    "valves" : [["V1", "V2", "V3", "Ar reactor"]],
     "times"  : [180.]
     }
 
@@ -87,7 +87,7 @@ def turn_ON(gas):
     Switch relay from the board to turn ON gas (check if valve is NO or NC)
     """
     relnum, state = relays[gas]
-    relayboard[relnum] = True if state == "NC" else False
+    relayboard[relnum] = True
 
 
 def turn_OFF(gas):
@@ -95,7 +95,7 @@ def turn_OFF(gas):
     Switch relay from the board to turn OFF gas (check if valve is NO or NC)
     """
     relnum, state = relays[gas]
-    relayboard[relnum] = True if state == "NO" else False
+    relayboard[relnum] = False
 
 
 # # # # # # # # # # # # # # # # # # # # # # 
@@ -235,14 +235,14 @@ def showgraph(initgas=sorted(relays.keys())[0], wait=30, valves=sorted(relays.ke
     """
     initgasclean = ' + '.join(initgas)
     if initgasclean == "":
-        initgasclean = "_**No Valve Opened**_"
+        initgasclean = "_**No Valve Switched**_"
     fingasclean = ' + '.join(fingas)
     if fingasclean == "":
-        fingasclean = "_**No Valve Opened**_"
+        fingasclean = "_**No Valve Switched**_"
     stepslog  = [f"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**0 &bull; Initialization:** &nbsp;&nbsp;&nbsp;&nbsp;**{initgasclean}** – {wait} s<br>"]
     stepslog += [f"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**Repeat {N} times:**<br>"]
     stepslog += ["&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%3d &bull; %-11s</b> – %.3lf s<br>" % \
-            (i+1, ' + '.join(v) if len(v)>0 else "_**No Valve Opened**_", t) for i,(v,t) in enumerate(zip(valves,times))]
+            (i+1, ' + '.join(v) if len(v)>0 else "_**No Valve Switched**_", t) for i,(v,t) in enumerate(zip(valves,times))]
     stepslog += [f"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**{Nsteps+1} &bull; Finalization:** &nbsp;&nbsp;&nbsp;&nbsp;**{fingasclean}** – {waitf} s"]
     
     annotated_steps = stepslog.copy()

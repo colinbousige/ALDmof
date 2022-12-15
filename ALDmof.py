@@ -50,9 +50,9 @@ for v in sorted(relays.keys()):
         NO.append(v)
 
 st.sidebar.write("### Initialization______________________________")
-st.sidebar.write(f"ℹ️ {', '.join(NC)} {'are' if len(NC)>1 else 'is'} Normally Closed – {', '.join(NO)} {'are' if len(NO)>1 else 'is'} Normally Opened")
+# st.sidebar.write(f"ℹ️ {', '.join(NC)} {'are' if len(NC)>1 else 'is'} Normally Closed – {', '.join(NO)} {'are' if len(NO)>1 else 'is'} Normally Opened")
 col1, col2 = st.sidebar.columns(2)
-initgas = col1.multiselect(f"Initial valves opened:", sorted(relays.keys()), default["initgas"])
+initgas = col1.multiselect(f"Initial valves switched:", sorted(relays.keys()), default["initgas"])
 wait = col2.number_input("Waiting before start [s]:", 0, 2000, default["wait"])
 
 st.sidebar.write("### Recipe___________________________________")
@@ -76,7 +76,7 @@ for step in range(Nsteps):
 
 st.sidebar.write("### Finalization______________________________")
 col1, col2 = st.sidebar.columns(2)
-fingas = col1.multiselect(f"Final valves opened:", sorted(relays.keys()), default["fingas"])
+fingas = col1.multiselect(f"Final valves switched:", sorted(relays.keys()), default["fingas"])
 waitf = col2.number_input("Final waiting [s]:", min_value=0, value=default["waitf"])
 
 print_tot_time(sum(times)*N+wait+waitf)
@@ -115,7 +115,7 @@ for i in range(len(allsteps)):
     if len(allsteps[i]) == 0:
         nogas.append(str(i))
 if len(nogas)>0:
-    warning_message.warning(f"**⚠️ Step {', '.join(nogas)} with no valve opened: please check it's not an error.** ⚠️")
+    warning_message.warning(f"**⚠️ Step {', '.join(nogas)} with no valve switched: please check it's not an error.** ⚠️")
 
 showgraph(initgas=initgas, wait=wait, valves=valves, times=times, 
           Nsteps=Nsteps, N=N, fingas=fingas, waitf=waitf)
