@@ -29,8 +29,8 @@ st.set_page_config(
 # # # # # # # # # # # # # # # # # # # # # # # #
 
 # Relays from the USB relay board
-# relayboard = pyhid_usb_relay.find()
-relayboard = [1,2,3,4,5,6]
+relayboard = pyhid_usb_relay.find()
+
 
 # Relays attribution, state (NO for Normally Opened, NC for Normally Closed)
 relays = {
