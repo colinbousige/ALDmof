@@ -5,7 +5,8 @@ from dateutil import parser
 from tempfile import mkstemp
 from shutil import move, copymode
 import os
-import pyhid_usb_relay
+import subprocess
+
 
 st.set_page_config(
     page_title="ALD – CVD Process",
@@ -28,17 +29,14 @@ st.set_page_config(
 # Define default variables and relays
 # # # # # # # # # # # # # # # # # # # # # # # #
 
-# Relays from the USB relay board
-relayboard = pyhid_usb_relay.find()
-
 
 # Relays attribution, state (NO for Normally Opened, NC for Normally Closed)
 relays = {
-    "V1": (1, "NC"),
-    "V2": (2, "NC"),
-    "V3": (3, "NC"),
-    "Ar reactor": (4, "NC"),
-    "Turn OFF Ar bypass": (5, "NO")
+    "V1": 1,
+    "V2": 2,
+    "V3": 3,
+    "Ar reactor": 4,
+    "Turn OFF Ar bypass": 5
 }
 
 # # # # # # # # # # # # # # # # # # # # # # # #
@@ -53,8 +51,8 @@ recALD = {
     "waitf"  : 10,
     "N"      : 100,
     "Nsteps" : 4,
-    "valves" : [["V1"], ["V2","V3"], ["V1"], ["V2","Ar reactor"]],
-    "times"  : [10., 10., 10., 10.]
+    "valves" : [["Turn OFF Ar bypass", "V1", "Ar reactor"], [], ["Turn OFF Ar bypass", "V2", "Ar reactor"], []],
+    "times"  : [5., 10., 5., 10.]
     }
 
 recPurge = {
@@ -84,18 +82,19 @@ if 'cycle_time' not in st.session_state:
 
 def turn_ON(gas):
     """
-    Switch relay from the board to turn ON gas (check if valve is NO or NC)
+    Switch relay from the board to turn ON gas
     """
-    relnum, state = relays[gas]
-    relayboard[relnum] = True
+    relnum = relays[gas]
+    subprocess.run(f"usbrelay RELAY_{relnum}=1", shell=True)
 
 
 def turn_OFF(gas):
     """
-    Switch relay from the board to turn OFF gas (check if valve is NO or NC)
+    Switch relay from the board to turn OFF gas
     """
-    relnum, state = relays[gas]
-    relayboard[relnum] = False
+    relnum = relays[gas]
+    subprocess.run(f"usbrelay RELAY_{relnum}=0", shell=True)
+
 
 
 # # # # # # # # # # # # # # # # # # # # # # 
@@ -286,8 +285,7 @@ def end_recipe():
     """
     Ending procedure for recipes
     """
-    for v in sorted(relays.keys()):
-        turn_OFF(v)
+    subprocess.run("usbrelay RELAY_9=0", shell=True)
     st.experimental_rerun()
 
 
@@ -337,7 +335,7 @@ def Recipe(valves=sorted(relays.keys())[0], times=[10.], N=100, recipe="ALD",
             countdown(times[step], tot)
             tot = tot-times[step]
             for v in valves[step]:
-                if v not in valves[(step+1)%len(times)]:
+                if (i<N-1 and v not in valves[(step+1)%len(times)]) or (i==N-1 and v not in fingas):
                     turn_OFF(v)
         update_cycle(st.session_state['logname'], i, N)
     showgraph(initgas=initgas, wait=wait, valves=valves, N=N,

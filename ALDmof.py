@@ -41,16 +41,8 @@ if len(uploaded_file) > 0:
 
 default = st.session_state['default']
 
-NO=[]
-NC=[]
-for v in sorted(relays.keys()):
-    if relays[v][1]=='NC':
-        NC.append(v)
-    else:
-        NO.append(v)
 
 st.sidebar.write("### Initialization______________________________")
-# st.sidebar.write(f"ℹ️ {', '.join(NC)} {'are' if len(NC)>1 else 'is'} Normally Closed – {', '.join(NO)} {'are' if len(NO)>1 else 'is'} Normally Opened")
 col1, col2 = st.sidebar.columns(2)
 initgas = col1.multiselect(f"Initial valves switched:", sorted(relays.keys()), default["initgas"])
 wait = col2.number_input("Waiting before start [s]:", 0, 2000, default["wait"])
